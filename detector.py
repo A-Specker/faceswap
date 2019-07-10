@@ -223,23 +223,36 @@ class FaceCorrector(object):
         return x, y, w, h
 
 class Tools:
-    @staticmethod
+    
+
+
+
     def calculateDelaunayTriangles(rect, points):
+        def rectContains(rect, point):
+            if point[0] < rect[0]:
+                return False
+            elif point[1] < rect[1]:
+                return False
+            elif point[0] > rect[0] + rect[2]:
+                return False
+            elif point[1] > rect[1] + rect[3]:
+                return False
+            return True
         #create subdiv
         subdiv = cv2.Subdiv2D(rect)
-        print("1")
 
         # Insert points into subdiv
+        points = tuple(map(tuple, np.squeeze(points)))
         for p in points:
+            print(p)
             subdiv.insert(p)
-        print("2")
 
         triangleList = subdiv.getTriangleList()
         delaunayTri = []
         
         pt = []    
             
-        for t in triangleList:        
+        for t in triangleList:       
             pt.append((t[0], t[1]))
             pt.append((t[2], t[3]))
             pt.append((t[4], t[5]))
@@ -251,12 +264,12 @@ class Tools:
             if rectContains(rect, pt1) and rectContains(rect, pt2) and rectContains(rect, pt3):
                 ind = []
                 #Get face-points (from 68 face detector) by coordinates
-                for j in xrange(0, 3):
-                    for k in xrange(0, len(points)):                    
+                for j in range(0, 3):
+                    for k in range(0, len(points)):
                         if(abs(pt[j][0] - points[k][0]) < 1.0 and abs(pt[j][1] - points[k][1]) < 1.0):
                             ind.append(k)    
-                # Three points form a triangle. Triangle array corresponds to the file tri.txt in FaceMorph 
-                if len(ind) == 3:                                                
+                # Three points form a triangle. Triangle array corresponds to the file tri.txt in FaceMorph
+                if len(ind) == 3:
                     delaunayTri.append((ind[0], ind[1], ind[2]))
             
             pt = []        

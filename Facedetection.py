@@ -11,7 +11,7 @@ Lets try different face detectors
 https://www.learnopencv.com/face-detection-opencv-dlib-and-deep-learning-c-python/
 '''
 
-logging.basicConfig(format='%(asctime)s %(message)s')
+logging.basicConfig(format='%(asctime)s %(message)s', level=logging.DEBUG)
 
 
 
@@ -87,30 +87,28 @@ def get_conv_hull(p):
 
 if __name__ == '__main__':
 
-    logging.warning('Start.')
+    logging.info('Start.')
 
     img = load_img()
     det = FaceDetector('haar') # haar, nn, hog
     pose_estimator = load_pose_estimator()
-    logging.warning('Detector loaded.')
+    logging.info('Detector loaded.')
 
     face_coords = det.detect(img)
     img1 = draw_box(img.copy(), face_coords, (0, 255, 0))
-    logging.warning('Face detected.')
+    logging.info('Face detected.')
     
     shape = pose_estimation(img, face_coords, pose_estimator)
     marks = predictor_shape_to_coord_list(shape)
-    logging.warning('Landmarks calculated.')
+    logging.info('Landmarks calculated.')
 
     hulls = get_conv_hull(marks)
-    logging.warning('Hull calculated.')
+    logging.info('Hull calculated.')
 
 
 
     rect = (face_coords[0][0], face_coords[0][1], face_coords[0][2],face_coords[0][3])
-    dt = Tools.calculateDelaunayTriangles(rect, hulls[0])  # TODO hier weitermachen!
-
-    print(dt.shape)
+    delaunay = Tools.calculateDelaunayTriangles(rect, hulls[0])  
 
 
     
