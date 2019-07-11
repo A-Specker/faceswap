@@ -225,12 +225,6 @@ class FaceCorrector(object):
 class Tools:
     
     def calculateDelaunayTriangles(rect, points):
-        def idxs2coords(delTris):
-            coords = []
-            for i in delTris:
-                coords.append((points[i[0]], points[i[1]], points[i[2]]))
-            return np.asarray(coords) 
-        
         def rectContains(rect, point):
             if point[0] < rect[0]:
                 return False
@@ -277,8 +271,7 @@ class Tools:
             pt = []        
         # by now we got a tripple with the index of the coords of the triangle,
         # but we want a rtiple consisting of tuple coords
-        return idxs2coords(delaunayTri)        
-       # return delaunayTri
+        return delaunayTri
         
 
     def warpTriangle(img1, img2, t1, t2):

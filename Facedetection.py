@@ -107,6 +107,13 @@ def draw_delaunay(im, tris):
         cv2.line(im, i[2], i[0], col, 1)
     return im
 
+def delIxs2coords(points, delTris):
+    coords = []
+    for i in delTris:
+        coords.append((points[i[0]], points[i[1]], points[i[2]]))
+    return np.asarray(coords) 
+        
+
 
 
 if __name__ == '__main__':
@@ -132,8 +139,11 @@ if __name__ == '__main__':
 
     rect_1 = (face_coords[0][0], face_coords[0][1], face_coords[0][2], face_coords[0][3])
     rect_2 = (face_coords[1][0], face_coords[1][1], face_coords[1][2], face_coords[1][3])
-    delaunay_1 = Tools.calculateDelaunayTriangles(rect_1, hulls[0])
-    delaunay_2 = Tools.calculateDelaunayTriangles(rect_2, hulls[1])
+    delaunTris = Tools.calculateDelaunayTriangles(rect_1, hulls[0])
+    delaunay_1 = delIxs2coords(hulls[0], delaunTris)
+    delaunay_2 = delIxs2coords(hulls[1], delaunTris)
+
+
     logging.info('Delaunay calculated')
     #img1 = draw_delaunay(img1, delaunay_1)
     #img1 = draw_delaunay(img1, delaunay_2)
@@ -141,8 +151,8 @@ if __name__ == '__main__':
         triangle_cnt = np.array(delaunay_1[i])
         triangle_cnt2 = np.array(delaunay_2[i])
         tmpIM = img1.copy()
-        cv2.drawContours(tmpIM, [triangle_cnt], 0, (0,255,0), -1)
-        cv2.drawContours(tmpIM, [triangle_cnt2], 0, (255,0,0), -1)
+        cv2.drawContours(tmpIM, [triangle_cnt], 0, (0, 255, 0), -1)
+        cv2.drawContours(tmpIM, [triangle_cnt2], 0, (255, 0, 0), -1)
         show_img(tmpIM)
 
 
@@ -162,8 +172,8 @@ if __name__ == '__main__':
     img1 = add_marks_to_img(img1, marks)
     # logging.warning('Landmarks drawn.')
 
-    show_img(final_img)
-    show_img(img1)
+#    show_img(final_img)
+#    show_img(img1)
     # hull1 = get_conv_hull((np.asarray(marks1)))
 
     # logging.warning('Hull Done.')
