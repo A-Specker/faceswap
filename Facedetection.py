@@ -18,7 +18,7 @@ logging.basicConfig(format='%(asctime)s %(message)s')#, level=logging.DEBUG)
 def load_img():
     #im = cv2.imread('files/girl.png', cv2.IMREAD_COLOR)
     #im = cv2.imread('files/kevin.png')
-    #im= cv2.imread('files/quadruppel_kevin.png')
+    # im= cv2.imread('files/quadruppel_kevin.png')
     #im = cv2.imread('files/tutorial.png')
     im = cv2.imread('files/beide.png', cv2.IMREAD_COLOR)
 
@@ -93,8 +93,6 @@ def get_conv_hull(p):
     # convert idx to coords
     for j in range(len(res)):
         for k in range(p.shape[0]):
-            print(res[0])
-            print(p[0][j])
             hulls.append(p[k][res])
     return np.asarray(hulls)
 
@@ -107,14 +105,46 @@ def draw_delaunay(im, tris):
         cv2.line(im, i[2], i[0], col, 1)
     return im
 
+
 def delIxs2coords(points, delTris):
     coords = []
     for i in delTris:
         coords.append((points[i[0]], points[i[1]], points[i[2]]))
-    return np.asarray(coords) 
-        
+    return coords
 
 
+def draw_delaunay(img1, delaunay_1, delaunay_2):
+    for i in range(len(delaunay_1)):
+        triangle_cnt = np.array(delaunay_1[i])
+        triangle_cnt2 = np.array(delaunay_2[i])
+        tmpIM = img1.copy()
+        cv2.drawContours(tmpIM, [triangle_cnt], 0, (0, 255, 0), -1)
+        cv2.drawContours(tmpIM, [triangle_cnt2], 0, (255, 0, 0), -1)
+        show_img(tmpIM)
+
+
+def warp_tris_to_face(img, del_1, del_2):
+    for i in range(len(del_1)):
+        d1 = []
+        d2 = []
+        for j in range(len(del_1[i])):
+            d1.append(tuple(del_1[i][j][0]))
+            d2.append(tuple(del_2[i][j][0]))
+        Tools.warpTriangle(img, d1, d2)
+
+def smooth_in_face(hull, warped_im, shape, type):
+    hullMask = []
+    for i in range(len(hull)):
+        hullMask.append(hull[i])
+    mask = np.zeros(shape, dtype=type)
+    cv2.fillConvexPoly(mask, np.int32(hullMask), (255, 255, 255))
+    r = cv2.boundingRect(np.float32(hull))
+    center = (r[0] + r[2]//2, r[1]+r[3]//2)
+
+    swap1 = cv2.seamlessClone(np.uint8(warped_im), img, mask, center, 1)
+    swap3 = cv2.seamlessClone(np.uint8(warped_im), img, mask, center, 3)
+
+    return swap1, swap3
 
 if __name__ == '__main__':
 
@@ -136,51 +166,28 @@ if __name__ == '__main__':
     hulls = get_conv_hull(marks)
     logging.info('Hull calculated.')
 
-
+    # from here on its the two faces in the beginning of the face_array
     rect_1 = (face_coords[0][0], face_coords[0][1], face_coords[0][2], face_coords[0][3])
     rect_2 = (face_coords[1][0], face_coords[1][1], face_coords[1][2], face_coords[1][3])
     delaunTris = Tools.calculateDelaunayTriangles(rect_1, hulls[0])
     delaunay_1 = delIxs2coords(hulls[0], delaunTris)
     delaunay_2 = delIxs2coords(hulls[1], delaunTris)
-
-
     logging.info('Delaunay calculated')
-    #img1 = draw_delaunay(img1, delaunay_1)
-    #img1 = draw_delaunay(img1, delaunay_2)
-    for i in range(len(delaunay_1)):
-        triangle_cnt = np.array(delaunay_1[i])
-        triangle_cnt2 = np.array(delaunay_2[i])
-        tmpIM = img1.copy()
-        cv2.drawContours(tmpIM, [triangle_cnt], 0, (0, 255, 0), -1)
-        cv2.drawContours(tmpIM, [triangle_cnt2], 0, (255, 0, 0), -1)
-        show_img(tmpIM)
 
-
-#    print(len(delaunay))
-    
-    final_img = img.copy()
-    tester = final_img.copy()
-    for i in range(len(delaunay_1)):
-        d1 = list(map(tuple, delaunay_1[i]))
-        d2 = list(map(tuple, delaunay_2[i]))
-        print(d2)
-        print(d1)
-        Tools.warpTriangle(final_img, final_img, d1, d2)  
-            
-
+    warped_img = img.copy()
+    warp_tris_to_face(warped_img, delaunay_1, delaunay_2)
+    logging.info('Triangles warped.')
+    swaped_img, swaped_img3 = smooth_in_face(hulls[1], warped_img, img1.shape, img1.dtype)
 
     img1 = add_marks_to_img(img1, marks)
-    # logging.warning('Landmarks drawn.')
+    show_img(img1)
+    show_img(warped_img)
+    show_img(swaped_img)
+    # show_img(swaped_img3)
 
-#    show_img(final_img)
-#    show_img(img1)
-    # hull1 = get_conv_hull((np.asarray(marks1)))
 
-    # logging.warning('Hull Done.')
 
-    # print(hull1.shape)
-
-    logging.warning('Done.')
+    logging.info('Done.')
 
     cv2.destroyAllWindows()
 

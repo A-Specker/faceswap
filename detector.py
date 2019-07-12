@@ -274,7 +274,7 @@ class Tools:
         return delaunayTri
         
 
-    def warpTriangle(img1, img2, t1, t2):
+    def warpTriangle(img, t1, t2):
         def applyAffineTransform(src, srcTri, dstTri, size) :
         
             # Given a pair of triangles, find the affine transform.
@@ -304,7 +304,7 @@ class Tools:
         cv2.fillConvexPoly(mask, np.int32(t2RectInt), (1.0, 1.0, 1.0), 16, 0);
 
         # Apply warpImage to small rectangular patches
-        img1Rect = img1[r1[1]:r1[1] + r1[3], r1[0]:r1[0] + r1[2]]
+        img1Rect = img[r1[1]:r1[1] + r1[3], r1[0]:r1[0] + r1[2]]
         #img2Rect = np.zeros((r2[3], r2[2]), dtype = img1Rect.dtype)
     
         size = (r2[2], r2[3])
@@ -313,6 +313,5 @@ class Tools:
         img2Rect = img2Rect * mask
 
         # Copy triangular region of the rectangular patch to the output image
-        img2[r2[1]:r2[1]+r2[3], r2[0]:r2[0]+r2[2]] = img2[r2[1]:r2[1]+r2[3], r2[0]:r2[0]+r2[2]] * ( (1.0, 1.0, 1.0) - mask)
-        img2[r2[1]:r2[1]+r2[3], r2[0]:r2[0]+r2[2]] = img2[r2[1]:r2[1]+r2[3], r2[0]:r2[0]+r2[2]] + img2Rect
-    
+        img[r2[1]:r2[1]+r2[3], r2[0]:r2[0]+r2[2]] = img[r2[1]:r2[1]+r2[3], r2[0]:r2[0]+r2[2]] * ( (1.0, 1.0, 1.0) - mask)
+        img[r2[1]:r2[1]+r2[3], r2[0]:r2[0]+r2[2]] = img[r2[1]:r2[1]+r2[3], r2[0]:r2[0]+r2[2]] + img2Rect
