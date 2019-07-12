@@ -11,7 +11,8 @@ Lets try different face detectors
 https://www.learnopencv.com/face-detection-opencv-dlib-and-deep-learning-c-python/
 '''
 
-logging.basicConfig(format='%(asctime)s %(message)s')#, level=logging.DEBUG)
+# logging.basicConfig(format='%(asctime)s %(message)s')#, level=logging.DEBUG)
+logging.basicConfig(format='%(asctime)s %(message)s', level=logging.DEBUG)
 
 
 
@@ -21,7 +22,7 @@ def load_img():
     # im= cv2.imread('files/quadruppel_kevin.png')
     #im = cv2.imread('files/tutorial.png')
     im = cv2.imread('files/beide.png', cv2.IMREAD_COLOR)
-
+#   im = cv2.resize(im, (im.shape*2))
     im = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
 
     if im is None:
@@ -112,6 +113,13 @@ def delIxs2coords(points, delTris):
         coords.append((points[i[0]], points[i[1]], points[i[2]]))
     return coords
 
+def calc_delaunay(idx1, idx2, face_coords, hulls):
+    rect = (face_coords[idx1][0], face_coords[idx1][1], face_coords[idx1][2], face_coords[idx1][3])
+    delaun_tris = Tools.calculateDelaunayTriangles(rect, hulls[idx1])
+    delaunay_1 = delIxs2coords(hulls[idx1], delaun_tris)
+    delaunay_2 = delIxs2coords(hulls[idx2], delaun_tris)
+    return delaunay_1, delaunay_2
+
 
 def draw_delaunay(img1, delaunay_1, delaunay_2):
     for i in range(len(delaunay_1)):
@@ -123,67 +131,73 @@ def draw_delaunay(img1, delaunay_1, delaunay_2):
         show_img(tmpIM)
 
 
-def warp_tris_to_face(img, del_1, del_2):
+def warp_tris_to_face(source, target, del_1, del_2):
     for i in range(len(del_1)):
         d1 = []
         d2 = []
         for j in range(len(del_1[i])):
             d1.append(tuple(del_1[i][j][0]))
             d2.append(tuple(del_2[i][j][0]))
-        Tools.warpTriangle(img, d1, d2)
+        Tools.warpTriangle(source, target, d1, d2)
+        Tools.warpTriangle(source, target, d2, d1)
+    return target
 
-def smooth_in_face(hull, warped_im, shape, type):
+def smooth_in_face(hull, img, warped_im, shape, ty):
     hullMask = []
     for i in range(len(hull)):
         hullMask.append(hull[i])
-    mask = np.zeros(shape, dtype=type)
+    mask = np.zeros(shape, dtype=ty)
     cv2.fillConvexPoly(mask, np.int32(hullMask), (255, 255, 255))
     r = cv2.boundingRect(np.float32(hull))
     center = (r[0] + r[2]//2, r[1]+r[3]//2)
+    ret = cv2.seamlessClone(np.uint8(warped_im), img, mask, center, 1)
+    return ret
 
-    swap1 = cv2.seamlessClone(np.uint8(warped_im), img, mask, center, 1)
-    swap3 = cv2.seamlessClone(np.uint8(warped_im), img, mask, center, 3)
-
-    return swap1, swap3
 
 if __name__ == '__main__':
 
     logging.info('Start.')
 
     img = load_img()
-    det = FaceDetector('haar') # haar, nn, hog
+    det = FaceDetector('hog') # haar, nn, hog
     pose_estimator = load_pose_estimator()
     logging.info('Detector loaded.')
 
-    face_coords = det.detect(img)
+    face_coords = det.detect(img.copy())
     img1 = draw_box(img.copy(), face_coords, (0, 255, 0))
-    logging.info('Face detected.')
+    logging.info('{} Faces detected.'.format(str(face_coords.shape[0])))
+    # print(face_coords[0].shape)
+ #   print(face_coords[0].shape)
     
-    shape = pose_estimation(img, face_coords, pose_estimator)
-    marks = predictor_shape_to_coord_list(shape)
+    face_shape = pose_estimation(img, face_coords, pose_estimator)
+    marks = predictor_shape_to_coord_list(face_shape)
+    print(marks.shape)
+    img1 = add_marks_to_img(img1, marks)
+#    show_img(img1)
+
     logging.info('Landmarks calculated.')
 
     hulls = get_conv_hull(marks)
     logging.info('Hull calculated.')
 
-    # from here on its the two faces in the beginning of the face_array
-    rect_1 = (face_coords[0][0], face_coords[0][1], face_coords[0][2], face_coords[0][3])
-    rect_2 = (face_coords[1][0], face_coords[1][1], face_coords[1][2], face_coords[1][3])
-    delaunTris = Tools.calculateDelaunayTriangles(rect_1, hulls[0])
-    delaunay_1 = delIxs2coords(hulls[0], delaunTris)
-    delaunay_2 = delIxs2coords(hulls[1], delaunTris)
+    # currently, two face from all detected faces are used, maybe change this
+    faceIdx0 = 0
+    faceIdx1 = 1
+
+    delaunay_1, delaunay_2 = calc_delaunay(faceIdx0, faceIdx1, face_coords, hulls)
     logging.info('Delaunay calculated')
 
-    warped_img = img.copy()
-    warp_tris_to_face(warped_img, delaunay_1, delaunay_2)
+    warped_img = warp_tris_to_face(img, img.copy(), delaunay_2, delaunay_1)
     logging.info('Triangles warped.')
-    swaped_img, swaped_img3 = smooth_in_face(hulls[1], warped_img, img1.shape, img1.dtype)
 
-    img1 = add_marks_to_img(img1, marks)
-    show_img(img1)
-    show_img(warped_img)
+    swaped_img = smooth_in_face(hulls[faceIdx0], img, warped_img, img.shape, img.dtype)
+    swaped_img = smooth_in_face(hulls[faceIdx1], swaped_img, warped_img, img.shape, img.dtype)
+    logging.info('Faces swaped.')
+
+    # img1 = add_marks_to_img(img1, marks)
+    # show_img(img)
+    # show_img(warped_img)
     show_img(swaped_img)
-    # show_img(swaped_img3)
 
 
 

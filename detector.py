@@ -223,7 +223,6 @@ class FaceCorrector(object):
         return x, y, w, h
 
 class Tools:
-    
     def calculateDelaunayTriangles(rect, points):
         def rectContains(rect, point):
             if point[0] < rect[0]:
@@ -268,20 +267,18 @@ class Tools:
                 if len(ind) == 3:
                     delaunayTri.append((ind[0], ind[1], ind[2]))
             
-            pt = []        
-        # by now we got a tripple with the index of the coords of the triangle,
-        # but we want a rtiple consisting of tuple coords
+            pt = []
         return delaunayTri
         
 
-    def warpTriangle(img, t1, t2):
-        def applyAffineTransform(src, srcTri, dstTri, size) :
+    def warpTriangle(img1, img2, t1, t2):
+        def applyAffineTransform(src, srcTri, dstTri, size):
         
             # Given a pair of triangles, find the affine transform.
-            warpMat = cv2.getAffineTransform( np.float32(srcTri), np.float32(dstTri) )
+            warpMat = cv2.getAffineTransform(np.float32(srcTri), np.float32(dstTri))
     
             # Apply the Affine Transform just found to the src image
-            dst = cv2.warpAffine( src, warpMat, (size[0], size[1]), None, flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_REFLECT_101 )
+            dst = cv2.warpAffine(src, warpMat, (size[0], size[1]), None, flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_REFLECT_101)
             return dst
 
         # Find bounding rectangle for each triangle
@@ -304,14 +301,14 @@ class Tools:
         cv2.fillConvexPoly(mask, np.int32(t2RectInt), (1.0, 1.0, 1.0), 16, 0);
 
         # Apply warpImage to small rectangular patches
-        img1Rect = img[r1[1]:r1[1] + r1[3], r1[0]:r1[0] + r1[2]]
+        img1Rect = img1[r1[1]:r1[1] + r1[3], r1[0]:r1[0] + r1[2]]
         #img2Rect = np.zeros((r2[3], r2[2]), dtype = img1Rect.dtype)
-    
+        
         size = (r2[2], r2[3])
 
         img2Rect = applyAffineTransform(img1Rect, t1Rect, t2Rect, size)
         img2Rect = img2Rect * mask
 
         # Copy triangular region of the rectangular patch to the output image
-        img[r2[1]:r2[1]+r2[3], r2[0]:r2[0]+r2[2]] = img[r2[1]:r2[1]+r2[3], r2[0]:r2[0]+r2[2]] * ( (1.0, 1.0, 1.0) - mask)
-        img[r2[1]:r2[1]+r2[3], r2[0]:r2[0]+r2[2]] = img[r2[1]:r2[1]+r2[3], r2[0]:r2[0]+r2[2]] + img2Rect
+        img2[r2[1]:r2[1]+r2[3], r2[0]:r2[0]+r2[2]] = img2[r2[1]:r2[1]+r2[3], r2[0]:r2[0]+r2[2]] * ( (1.0, 1.0, 1.0) - mask)
+        img2[r2[1]:r2[1]+r2[3], r2[0]:r2[0]+r2[2]] = img2[r2[1]:r2[1]+r2[3], r2[0]:r2[0]+r2[2]] + img2Rect
