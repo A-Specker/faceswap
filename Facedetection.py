@@ -18,10 +18,10 @@ logging.basicConfig(format='%(asctime)s %(message)s')#, level=logging.DEBUG)
 
 def load_img():
     #im = cv2.imread('files/girl.png', cv2.IMREAD_COLOR)
-    #im = cv2.imread('files/kevin.png')
+    im = cv2.imread('files/keeevin.png')
     # im= cv2.imread('files/quadruppel_kevin.png')
     #im = cv2.imread('files/tutorial.png')
-    im = cv2.imread('files/beide.png', cv2.IMREAD_COLOR)
+    # im = cv2.imread('files/beide.png', cv2.IMREAD_COLOR)
 #   im = cv2.resize(im, (im.shape*2))
     im = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
 
@@ -160,6 +160,8 @@ def read_video():
     count = 0
     frames = []
     while success:
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+
         frames.append(image)
         # cv2.imwrite("frame%d.jpg" % count, image)  # save frame as JPEG file
         success, image = vidcap.read()
@@ -171,28 +173,21 @@ if __name__ == '__main__':
 
     logging.info('Start.')
 
-    img_orig = load_img()
-    det = FaceDetector('hog') # haar, nn, hog
+    img = load_img()
+    det = FaceDetector('haar') # haar, nn, hog --> haar is somehow more stable than hog but slower
     pose_estimator = load_pose_estimator()
     logging.info('Detector loaded.')
 
     frames = read_video()
-    print(img_orig.shape)
-    print(frames[0].shape)
-
-    img_orig =cv2.resize(img_orig, frames[0].shape)
-    print(img_orig.shape)
-    logging.warning(str(len(frames)))
+    output = []
+    logging.warning(str(len(frames)//100))
     for f in range(len(frames)):
-
-        vis = np.concatenate((img_orig, frames[f]), axis=0)
-        show_img(vis)
-        if f > 10:
-            quit()
+        vis = np.concatenate((img, frames[f]), axis=1)
         face_coords = det.detect(vis.copy())
         logging.info('{} Faces detected.'.format(str(face_coords.shape[0])))
-        # print(face_coords[0].shape)
-     #   print(face_coords[0].shape)
+        if face_coords.shape[0] != 2:
+            output.append(vis)
+            continue
 
         face_shape = pose_estimation(vis, face_coords, pose_estimator)
         marks = predictor_shape_to_coord_list(face_shape)
@@ -216,10 +211,15 @@ if __name__ == '__main__':
         swaped_img = smooth_in_face(hulls[faceIdx1], swaped_img, warped_img, vis.shape, vis.dtype)
         logging.info('Faces swaped.')
         # img1 = add_marks_to_img(img1, marks)
+        output.append(swaped_img)
+        logging.warning(f)
     # show_img(img)
     # show_img(img1)
     # show_img(warped_img)
     # show_img(swaped_img)
+    for counter in range(len(output)):
+        im = cv2.cvtColor(output[counter], cv2.COLOR_RGB2BGR)
+        cv2.imwrite("files/vidder/frame%d.jpg" % counter, im)
 
 
 
