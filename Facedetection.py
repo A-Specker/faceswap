@@ -11,8 +11,8 @@ Lets try different face detectors
 https://www.learnopencv.com/face-detection-opencv-dlib-and-deep-learning-c-python/
 '''
 
-# logging.basicConfig(format='%(asctime)s %(message)s')#, level=logging.DEBUG)
-logging.basicConfig(format='%(asctime)s %(message)s', level=logging.DEBUG)
+logging.basicConfig(format='%(asctime)s %(message)s')#, level=logging.DEBUG)
+# logging.basicConfig(format='%(asctime)s %(message)s', level=logging.DEBUG)
 
 
 
@@ -154,50 +154,72 @@ def smooth_in_face(hull, img, warped_im, shape, ty):
     return ret
 
 
+def read_video():
+    vidcap = cv2.VideoCapture('files/eyeContact.mp4')
+    success, image = vidcap.read()
+    count = 0
+    frames = []
+    while success:
+        frames.append(image)
+        # cv2.imwrite("frame%d.jpg" % count, image)  # save frame as JPEG file
+        success, image = vidcap.read()
+        # print('Read a new frame: ', success)
+        # count += 1
+    return frames
+
 if __name__ == '__main__':
 
     logging.info('Start.')
 
-    img = load_img()
+    img_orig = load_img()
     det = FaceDetector('hog') # haar, nn, hog
     pose_estimator = load_pose_estimator()
     logging.info('Detector loaded.')
 
-    face_coords = det.detect(img.copy())
-    img1 = draw_box(img.copy(), face_coords, (0, 255, 0))
-    logging.info('{} Faces detected.'.format(str(face_coords.shape[0])))
-    # print(face_coords[0].shape)
- #   print(face_coords[0].shape)
-    
-    face_shape = pose_estimation(img, face_coords, pose_estimator)
-    marks = predictor_shape_to_coord_list(face_shape)
-    print(marks.shape)
-    img1 = add_marks_to_img(img1, marks)
-#    show_img(img1)
+    frames = read_video()
+    print(img_orig.shape)
+    print(frames[0].shape)
 
-    logging.info('Landmarks calculated.')
+    img_orig =cv2.resize(img_orig, frames[0].shape)
+    print(img_orig.shape)
+    logging.warning(str(len(frames)))
+    for f in range(len(frames)):
 
-    hulls = get_conv_hull(marks)
-    logging.info('Hull calculated.')
+        vis = np.concatenate((img_orig, frames[f]), axis=0)
+        show_img(vis)
+        if f > 10:
+            quit()
+        face_coords = det.detect(vis.copy())
+        logging.info('{} Faces detected.'.format(str(face_coords.shape[0])))
+        # print(face_coords[0].shape)
+     #   print(face_coords[0].shape)
 
-    # currently, two face from all detected faces are used, maybe change this
-    faceIdx0 = 0
-    faceIdx1 = 1
+        face_shape = pose_estimation(vis, face_coords, pose_estimator)
+        marks = predictor_shape_to_coord_list(face_shape)
 
-    delaunay_1, delaunay_2 = calc_delaunay(faceIdx0, faceIdx1, face_coords, hulls)
-    logging.info('Delaunay calculated')
+        logging.info('Landmarks calculated.')
 
-    warped_img = warp_tris_to_face(img, img.copy(), delaunay_2, delaunay_1)
-    logging.info('Triangles warped.')
+        hulls = get_conv_hull(marks)
+        logging.info('Hull calculated.')
 
-    swaped_img = smooth_in_face(hulls[faceIdx0], img, warped_img, img.shape, img.dtype)
-    swaped_img = smooth_in_face(hulls[faceIdx1], swaped_img, warped_img, img.shape, img.dtype)
-    logging.info('Faces swaped.')
+        # currently, two face from all detected faces are used, maybe change this
+        faceIdx0 = 0
+        faceIdx1 = 1
 
-    # img1 = add_marks_to_img(img1, marks)
+        delaunay_1, delaunay_2 = calc_delaunay(faceIdx0, faceIdx1, face_coords, hulls)
+        logging.info('Delaunay calculated')
+
+        warped_img = warp_tris_to_face(vis, vis.copy(), delaunay_2, delaunay_1)
+        logging.info('Triangles warped.')
+
+        swaped_img = smooth_in_face(hulls[faceIdx0], vis, warped_img, vis.shape, vis.dtype)
+        swaped_img = smooth_in_face(hulls[faceIdx1], swaped_img, warped_img, vis.shape, vis.dtype)
+        logging.info('Faces swaped.')
+        # img1 = add_marks_to_img(img1, marks)
     # show_img(img)
+    # show_img(img1)
     # show_img(warped_img)
-    show_img(swaped_img)
+    # show_img(swaped_img)
 
 
 
