@@ -11,8 +11,8 @@ Lets try different face detectors
 https://www.learnopencv.com/face-detection-opencv-dlib-and-deep-learning-c-python/
 '''
 
-logging.basicConfig(format='%(asctime)s %(message)s')#, level=logging.DEBUG)
-# logging.basicConfig(format='%(asctime)s %(message)s', level=logging.DEBUG)
+#logging.basicConfig(format='%(asctime)s %(message)s')#, level=logging.DEBUG)
+logging.basicConfig(format='%(asctime)s %(message)s', level=logging.DEBUG)
 
 
 
@@ -159,7 +159,7 @@ if __name__ == '__main__':
     logging.info('Start.')
 
     img = load_img()
-    det = FaceDetector('hog') # haar, nn, hog
+    det = FaceDetector('nn') # haar, nn, hog
     pose_estimator = load_pose_estimator()
     logging.info('Detector loaded.')
 
@@ -173,7 +173,7 @@ if __name__ == '__main__':
 
     face_shape = pose_estimation(img, face_coords, pose_estimator)
     marks = predictor_shape_to_coord_list(face_shape)
-
+    np.save("mrks.npy", marks)
     logging.info('Landmarks calculated.')
 
     hulls = get_conv_hull(marks)
@@ -198,11 +198,6 @@ if __name__ == '__main__':
     # show_img(warped_img)
     # show_img(swaped_img)
 
-
-
     logging.info('Done.')
-
     cv2.destroyAllWindows()
-
-
 
