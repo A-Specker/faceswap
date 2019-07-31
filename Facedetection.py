@@ -173,7 +173,9 @@ if __name__ == '__main__':
 
     face_shape = pose_estimation(img, face_coords, pose_estimator)
     marks = predictor_shape_to_coord_list(face_shape)
-    np.save("mrks.npy", marks)
+    np.save("fcs_crds.npy", face_coords)
+
+    np.save("fcs_shp.npy", face_shape)
     logging.info('Landmarks calculated.')
 
     hulls = get_conv_hull(marks)
