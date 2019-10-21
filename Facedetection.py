@@ -14,14 +14,11 @@ https://www.learnopencv.com/face-detection-opencv-dlib-and-deep-learning-c-pytho
 #logging.basicConfig(format='%(asctime)s %(message)s')#, level=logging.DEBUG)
 logging.basicConfig(format='%(asctime)s %(message)s', level=logging.DEBUG)
 
+images = ['files/girl.png', 'files/kevin.png', 'files/quadruppel_kevin.png', 'files/tutorial.png', 'files/beide.png']
 
 
-def load_img():
-    #im = cv2.imread('files/girl.png', cv2.IMREAD_COLOR)
-    #im = cv2.imread('files/kevin.png')
-    # im= cv2.imread('files/quadruppel_kevin.png')
-    #im = cv2.imread('files/tutorial.png')
-    im = cv2.imread('files/beide.png', cv2.IMREAD_COLOR)
+def load_img(number):
+    im = cv2.imread(images[number], cv2.IMREAD_COLOR)
 #   im = cv2.resize(im, (im.shape*2))
     im = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
 
@@ -158,7 +155,7 @@ if __name__ == '__main__':
 
     logging.info('Start.')
 
-    img = load_img()
+    img = load_img(4)
     det = FaceDetector('nn') # haar, nn, hog
     pose_estimator = load_pose_estimator()
     logging.info('Detector loaded.')
