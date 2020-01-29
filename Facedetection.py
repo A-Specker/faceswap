@@ -14,8 +14,8 @@ https://www.learnopencv.com/face-detection-opencv-dlib-and-deep-learning-c-pytho
 #logging.basicConfig(format='%(asctime)s %(message)s')#, level=logging.DEBUG)
 logging.basicConfig(format='%(asctime)s %(message)s', level=logging.DEBUG)
 
-images = ['files/girl.png', 'files/kevin.png', 'files/quadruppel_kevin.png', 'files/tutorial.png', 'files/beide.png']
-
+#images = ['files/girl.png', 'files/kevin.png', 'files/quadruppel_kevin.png', 'files/tutorial.png', 'files/beide.png']
+images = ['files/david.png', 'files/me.png', 'files/stacked.png']
 
 def load_img(number):
     im = cv2.imread(images[number], cv2.IMREAD_COLOR)
@@ -155,8 +155,8 @@ if __name__ == '__main__':
 
     logging.info('Start.')
 
-    img = load_img(4)
-    det = FaceDetector('nn') # haar, nn, hog
+    img = load_img(2)
+    det = FaceDetector('hog') # haar, nn, hog
     pose_estimator = load_pose_estimator()
     logging.info('Detector loaded.')
 
@@ -167,6 +167,7 @@ if __name__ == '__main__':
     logging.info('{} Faces detected.'.format(str(face_coords.shape[0])))
     # print(face_coords[0].shape)
     #   print(face_coords[0].shape)
+
 
     face_shape = pose_estimation(img, face_coords, pose_estimator)
     marks = predictor_shape_to_coord_list(face_shape)
@@ -191,12 +192,11 @@ if __name__ == '__main__':
     swaped_img = smooth_in_face(hulls[faceIdx0], img, warped_img, img.shape, img.dtype)
     swaped_img = smooth_in_face(hulls[faceIdx1], swaped_img, warped_img, img.shape, img.dtype)
     logging.info('Faces swaped.')
-    # img1 = add_marks_to_img(img1, marks)
-    # show_img(img)
-    # show_img(img1)
-    # show_img(warped_img)
-    # show_img(swaped_img)
+    img1 = add_marks_to_img(img, marks)
+    #show_img(img)
+    show_img(img1)
+    #show_img(warped_img)
+    #show_img(swaped_img)
 
     logging.info('Done.')
     cv2.destroyAllWindows()
-
